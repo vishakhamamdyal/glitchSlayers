@@ -1,29 +1,49 @@
 {
-    "AWSTemplateFormatVersion": "2010-09-09",
-    "Resources": {
-      "secureEC2Instance": {
-        "Type": "AWS::EC2::Instance",
-        "Properties": {
-          "ImageId": "ami-0abcdef1234567890",
-          "InstanceType": "t2.micro",
-          "KeyName": "my-key",
-          "SecurityGroups": ["SG"]
-        }
-      },
-      "SG": {
-        "Type": "AWS::EC2::SecurityGroup",
-        "Properties": {
-          "GroupDescription": "Allow SSH",
-          "SecurityGroupIngress": [
-            {
-              "IpProtocol": "tcp",
-              "FromPort": 22,
-              "ToPort": 22,
-              "CidrIp": "0.0.0.0/0"
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Resources": {
+    "secureEC2Instance": {
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "ImageId": "ami-0abcdef1234567890",
+        "InstanceType": "t2.micro",
+        "KeyName": {
+          "Ref": "KeyName"
+        },
+        "SecurityGroups": [
+          {
+            "Ref": "SG"
+          }
+        ]
+      }
+    },
+    "SG": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Allow SSH",
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 22,
+            "ToPort": 22,
+            "CidrIp": {
+              "Ref": "SSHLocation"
             }
-          ]
-        }
+          }
+        ]
       }
     }
+  },
+  "Parameters": {
+    "KeyName": {
+      "Type": "AWS::EC2::KeyPair::KeyName",
+      "Description": "Name of an existing EC2 KeyPair to enable SSH access to the instance"
+    },
+    "SSHLocation": {
+      "Type": "String",
+      "Description": "The IP address range that can be used to SSH to the EC2 instances",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "0.0.0.0/0"
+    }
   }
-  
+}
