@@ -1,21 +1,19 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: EC2 instance with a security group
-
 Resources:
+  EC2Instance:
+    Properties:
+      ImageId: ami-0c55b159cbfafe1f0
+      InstanceType: t2.micro
+      SecurityGroupIds:
+      - Ref: EC2SecurityGroup
+    Type: AWS::EC2::Instance
   EC2SecurityGroup:
-    Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Enable SSH access
       SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: 0.0.0.0/0
-
-  EC2Instance:
-    Type: AWS::EC2::Instance
-    Properties:
-      InstanceType: t2.micro
-      ImageId: ami-0c55b159cbfafe1f0  #insecure Example AMI for Amazon Linux 2
-      SecurityGroups:
-        - !Ref EC2SecurityGroup
+      - CidrIp: 0.0.0.0/0
+        FromPort: 22
+        IpProtocol: tcp
+        ToPort: 22
+    Type: AWS::EC2::SecurityGroup
