@@ -16,6 +16,6 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: t2.micro
-      ImageId: ami-0c55b159cbfafe1f0  # Example AMI for Amazon Linux 2
+      ImageId: ami-0c55b159cbfafe1f0  #insecure Example AMI for Amazon Linux 2
       SecurityGroups:
         - !Ref EC2SecurityGroup
