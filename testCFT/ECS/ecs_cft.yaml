@@ -1,86 +1,83 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Insecure ECS Service
-
-Resources:
-  InsecureCluster:
-    Type: AWS::ECS::Cluster
-    Properties:
-      ClusterName: insecure-cluster
-
-  InsecureTaskExecutionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: insecure-ecs-execution-role
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: ecs-tasks.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: AllowAll
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action: '*'
-                Resource: '*'
-
-  InsecureTaskDefinition:
-    Type: AWS::ECS::TaskDefinition
-    Properties:
-      Family: insecure-task-def
-      RequiresCompatibilities:
-        - FARGATE
-      NetworkMode: awsvpc
-      ExecutionRoleArn: !GetAtt InsecureTaskExecutionRole.Arn
-      ContainerDefinitions:
-        - Name: insecure-container
-          Image: nginx:latest
-          Environment:
-            - Name: DATABASE_PASSWORD
-              Value: hardcoded-secret
-          PortMappings:
-            - ContainerPort: 80
-          Essential: true
-          # Missing logConfiguration, healthCheck, cpu, memory
-
-  InsecureSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Allow everything
-      VpcId: vpc-12345678
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          CidrIp: 0.0.0.0/0
-
-  InsecureService:
-    Type: AWS::ECS::Service
-    Properties:
-      Cluster: !Ref InsecureCluster
-      DesiredCount: 2
-      LaunchType: FARGATE
-      TaskDefinition: !Ref InsecureTaskDefinition
-      NetworkConfiguration:
-        AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
-          Subnets:
-            - subnet-12345678
-            - subnet-87654321
-          SecurityGroups:
-            - !Ref InsecureSecurityGroup
-      DeploymentConfiguration:
-        MaximumPercent: 200
-        MinimumHealthyPercent: 50
-
 Outputs:
   ServiceName:
     Description: ECS Service Name
-    Value: !Ref InsecureService
+    Value:
+      Ref: InsecureService
+Resources:
+  InsecureCluster:
+    Properties:
+      ClusterName: insecure-cluster
+    Type: AWS::ECS::Cluster
+  InsecureSecurityGroup:
+    Properties:
+      GroupDescription: Allow only necessary traffic
+      SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0
+        FromPort: 80
+        IpProtocol: tcp
+        ToPort: 80
+      - CidrIp: 0.0.0.0/0
+        FromPort: 443
+        IpProtocol: tcp
+        ToPort: 443
+      VpcId: vpc-12345678
+    Type: AWS::EC2::SecurityGroup
+  InsecureService:
+    Properties:
+      Cluster:
+        Ref: InsecureCluster
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 50
+      DesiredCount: 2
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          SecurityGroups:
+          - Ref: InsecureSecurityGroup
+          Subnets:
+          - subnet-12345678
+          - subnet-87654321
+      TaskDefinition:
+        Ref: InsecureTaskDefinition
+    Type: AWS::ECS::Service
+  InsecureTaskDefinition:
+    Properties:
+      ContainerDefinitions:
+      - Environment:
+        - Name: DATABASE_PASSWORD
+          Value: '{{resolve:ssm:/path/to/secureparam:1}}'
+        Essential: true
+        Image: nginx:latest
+        Name: insecure-container
+        PortMappings:
+        - ContainerPort: 80
+      ExecutionRoleArn:
+        Fn::GetAtt: InsecureTaskExecutionRole.Arn
+      Family: insecure-task-def
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+      - FARGATE
+    Type: AWS::ECS::TaskDefinition
+  InsecureTaskExecutionRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service: ecs-tasks.amazonaws.com
+        Version: '2012-10-17'
+      Policies:
+      - PolicyDocument:
+          Statement:
+          - Action: ecs:RunTask
+            Effect: Allow
+            Resource: '*'
+          Version: '2012-10-17'
+        PolicyName: AllowRunTask
+      RoleName: insecure-ecs-execution-role
+    Type: AWS::IAM::Role

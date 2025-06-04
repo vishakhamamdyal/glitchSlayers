@@ -1,21 +1,45 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: S3 bucket open to public, Lambda with secrets in plain text
-
+Description: S3 bucket restricted access, Lambda with secure environment variable
 Resources:
-  PublicS3Bucket:
-    Type: AWS::S3::Bucket
+  SecureLambda:
     Properties:
-      AccessControl: PublicRead
-
-  InsecureLambda:
-    Type: AWS::Lambda::Function
-    Properties:
-      FunctionName: InsecureFunction
-      Handler: index.handler
-      Role: arn:aws:iam::123456789012:role/lambda-role
       Code:
-        ZipFile: |
-          def handler(event, context):
-              api_key = "HARDCODED_SECRET_KEY"
-              print("Insecure Function")
+        ZipFile: "def handler(event, context):\n    api_key = '{{resolve:ssm:secureParameter:1}}'\n\
+          \    print(\"Secure Function\")\n"
+      FunctionName: SecureFunction
+      Handler: index.handler
+      Role:
+        Fn::GetAtt: LambdaExecutionRole.Arn
       Runtime: python3.9
+      Environment:
+        Variables:
+          secureParameter: '{{resolve:ssm:secureParameter:1}}'
+    Type: AWS::Lambda::Function
+  LambdaExecutionRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+        Version: '2012-10-17'
+      Policies:
+      - PolicyDocument:
+          Statement:
+          - Action: logs:CreateLogGroup
+            Effect: Allow
+            Resource: arn:aws:logs:*:*:*
+          - Action: logs:CreateLogStream
+            Effect: Allow
+            Resource: arn:aws:logs:*:*:*/*
+          - Action: logs:PutLogEvents
+            Effect: Allow
+            Resource: arn:aws:logs:*:*:*/*
+          PolicyName: CloudWatchLogsPolicy
+      RoleName: lambda-role
+    Type: AWS::IAM::Role
+  PublicS3Bucket:
+    Properties:
+      AccessControl: Private
+    Type: AWS::S3::Bucket
