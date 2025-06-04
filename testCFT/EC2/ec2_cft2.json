@@ -1,19 +1,19 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
     "Resources": {
-      "InsecureEC2Instance": {
+      "secureEC2Instance": {
         "Type": "AWS::EC2::Instance",
         "Properties": {
           "ImageId": "ami-0abcdef1234567890",
           "InstanceType": "t2.micro",
           "KeyName": "my-key",
-          "SecurityGroups": ["OpenSG"]
+          "SecurityGroups": ["SG"]
         }
       },
-      "OpenSG": {
+      "SG": {
         "Type": "AWS::EC2::SecurityGroup",
         "Properties": {
-          "GroupDescription": "Allow SSH from anywhere",
+          "GroupDescription": "Allow SSH",
           "SecurityGroupIngress": [
             {
               "IpProtocol": "tcp",

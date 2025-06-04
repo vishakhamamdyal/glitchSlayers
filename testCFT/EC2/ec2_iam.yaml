@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: EC2 with wildcard IAM role and unencrypted EBS
+Description: EC2 with wildcard IAM role and encrypted EBS
 
 Resources:
   AdminRole:
@@ -14,7 +14,7 @@ Resources:
               Service: ec2.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: FullAccessPolicy
+        - PolicyName: AccessPolicy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -22,12 +22,12 @@ Resources:
                 Action: "*"
                 Resource: "*"
 
-  VulnerableEC2:
+  EC2:
     Type: AWS::EC2::Instance
     Properties:
       ImageId: ami-0c55b159cbfafe1f0
       InstanceType: t2.micro
-      KeyName: insecure-key
+      KeyName: secure-key
       IamInstanceProfile: !Ref AdminRole
       BlockDeviceMappings:
         - DeviceName: /dev/xvda

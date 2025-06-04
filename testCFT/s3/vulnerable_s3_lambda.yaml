@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: S3 bucket open to public, Lambda with secrets in plain text
+Description: S3 bucket access, Lambda with environment variable
 
 Resources:
   PublicS3Bucket:

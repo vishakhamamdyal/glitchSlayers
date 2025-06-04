@@ -4,7 +4,7 @@
       "OverPermissiveIAMRole": {
         "Type": "AWS::IAM::Role",
         "Properties": {
-          "RoleName": "BadRole",
+          "RoleName": "Role",
           "AssumeRolePolicyDocument": {
             "Version": "2012-10-17",
             "Statement": [
@@ -19,7 +19,7 @@
           },
           "Policies": [
             {
-              "PolicyName": "InsecurePolicy",
+              "PolicyName": "securePolicy",
               "PolicyDocument": {
                 "Version": "2012-10-17",
                 "Statement": [

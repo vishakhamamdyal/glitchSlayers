@@ -1,11 +1,11 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "Insecure EC2 instance template",
+    "Description": "secure EC2 instance template",
     "Resources": {
-      "InsecureSecurityGroup": {
+      "secureSecurityGroup": {
         "Type": "AWS::EC2::SecurityGroup",
         "Properties": {
-          "GroupDescription": "Allow all inbound traffic - INSECURE",
+          "GroupDescription": "inbound traffic - secure",
           "SecurityGroupIngress": [
             {
               "IpProtocol": "-1",
@@ -15,7 +15,7 @@
           "VpcId": "vpc-123456"
         }
       },
-      "InsecureEC2Instance": {
+      "secureEC2Instance": {
         "Type": "AWS::EC2::Instance",
         "Properties": {
           "ImageId": "ami-12345678",
@@ -23,7 +23,7 @@
           "KeyName": "my-key",
           "SecurityGroupIds": [
             {
-              "Ref": "InsecureSecurityGroup"
+              "Ref": "secureSecurityGroup"
             }
           ],
           "UserData": {

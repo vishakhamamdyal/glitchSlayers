@@ -1,16 +1,16 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Insecure ECS Service
+Description: secure ECS Service
 
 Resources:
-  InsecureCluster:
+  secureCluster:
     Type: AWS::ECS::Cluster
     Properties:
-      ClusterName: insecure-cluster
+      ClusterName: secure-cluster
 
   InsecureTaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: insecure-ecs-execution-role
+      RoleName: secure-ecs-execution-role
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -30,13 +30,13 @@ Resources:
   InsecureTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: insecure-task-def
+      Family: secure-task-def
       RequiresCompatibilities:
         - FARGATE
       NetworkMode: awsvpc
-      ExecutionRoleArn: !GetAtt InsecureTaskExecutionRole.Arn
+      ExecutionRoleArn: !GetAtt secureTaskExecutionRole.Arn
       ContainerDefinitions:
-        - Name: insecure-container
+        - Name: secure-container
           Image: nginx:latest
           Environment:
             - Name: DATABASE_PASSWORD
@@ -44,12 +44,11 @@ Resources:
           PortMappings:
             - ContainerPort: 80
           Essential: true
-          # Missing logConfiguration, healthCheck, cpu, memory
 
-  InsecureSecurityGroup:
+  secureSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Allow everything
+      GroupDescription: sg
       VpcId: vpc-12345678
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -61,13 +60,13 @@ Resources:
           ToPort: 443
           CidrIp: 0.0.0.0/0
 
-  InsecureService:
+  secureService:
     Type: AWS::ECS::Service
     Properties:
-      Cluster: !Ref InsecureCluster
+      Cluster: !Ref secureCluster
       DesiredCount: 2
       LaunchType: FARGATE
-      TaskDefinition: !Ref InsecureTaskDefinition
+      TaskDefinition: !Ref secureTaskDefinition
       NetworkConfiguration:
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED
@@ -75,7 +74,7 @@ Resources:
             - subnet-12345678
             - subnet-87654321
           SecurityGroups:
-            - !Ref InsecureSecurityGroup
+            - !Ref secureSecurityGroup
       DeploymentConfiguration:
         MaximumPercent: 200
         MinimumHealthyPercent: 50
@@ -83,4 +82,4 @@ Resources:
 Outputs:
   ServiceName:
     Description: ECS Service Name
-    Value: !Ref InsecureService
+    Value: !Ref secureService
