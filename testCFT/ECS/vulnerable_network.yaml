@@ -1,29 +1,28 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: secure VPC with security groups
-
 Resources:
-  InsecureVPC:
-    Type: AWS::EC2::VPC
+  SecureSubnet:
+    Properties:
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+      VpcId:
+        Ref: secureVPC
+    Type: AWS::EC2::Subnet
+  SecureVPC:
     Properties:
       CidrBlock: 10.0.0.0/16
       Tags:
-        - Key: Name
-          Value: secureVPC
-
-  InsecureSubnet:
-    Type: AWS::EC2::Subnet
+      - Key: Name
+        Value: secureVPC
+    Type: AWS::EC2::VPC
+  SecurityGroup:
     Properties:
-      VpcId: !Ref secureVPC
-      CidrBlock: 10.0.1.0/24
-      MapPublicIpOnLaunch: true
-
-  OpenSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Allow all traffic
-      VpcId: !Ref secureVPC
+      GroupDescription: Allow necessary traffic only
       SecurityGroupIngress:
-        - IpProtocol: "-1"
-          FromPort: 0
-          ToPort: 65535
-          CidrIp: 0.0.0.0/0
+      - CidrIp: YOUR_IP_RANGE
+        FromPort: YOUR_FROM_PORT
+        IpProtocol: tcp
+        ToPort: YOUR_TO_PORT
+      VpcId:
+        Ref: secureVPC
+    Type: AWS::EC2::SecurityGroup
