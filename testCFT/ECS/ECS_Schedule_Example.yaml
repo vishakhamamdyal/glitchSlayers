@@ -1,39 +1,21 @@
-Type: AWS::ECS::Service
-Properties:
-  AvailabilityZoneRebalancing: String
-  CapacityProviderStrategy: 
-    - CapacityProviderStrategyItem
-  Cluster: String
-  DeploymentConfiguration: 
-    DeploymentConfiguration
-  DeploymentController: 
-    DeploymentController
-  DesiredCount: Integer
-  EnableECSManagedTags: Boolean
-  EnableExecuteCommand: Boolean
-  HealthCheckGracePeriodSeconds: Integer
-  LaunchType: String
-  LoadBalancers: 
-    - LoadBalancer
-  NetworkConfiguration: 
-    NetworkConfiguration
-  PlacementConstraints: 
-    - PlacementConstraint
-  PlacementStrategies: 
-    - PlacementStrategy
-  PlatformVersion: String
-  PropagateTags: String
-  Role: String
-  SchedulingStrategy: String
-  ServiceConnectConfiguration: 
-    ServiceConnectConfiguration
-  ServiceName: String
-  ServiceRegistries: 
-    - ServiceRegistry
-  Tags: 
-    - Tag
-  TaskDefinition: String
-  VolumeConfigurations: 
-    - ServiceVolumeConfiguration
-  VpcLatticeConfigurations: 
-    - VpcLatticeConfiguration
+AWSTemplateFormatVersion: '2010-09-09'
+Description: EC2 instance with a security group
+
+Resources:
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH access
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: ami-0c55b159cbfafe1f0  # Example AMI for Amazon Linux 2
+      SecurityGroups:
+        - !Ref EC2SecurityGroup
