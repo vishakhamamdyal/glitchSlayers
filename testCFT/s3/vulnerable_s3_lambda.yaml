@@ -1,21 +1,16 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: S3 bucket open to public, Lambda with secrets in plain text
-
 Resources:
-  PublicS3Bucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      AccessControl: PublicRead
-
   InsecureLambda:
-    Type: AWS::Lambda::Function
     Properties:
+      Code:
+        ZipFile: "def handler(event, context):\n    api_key = \"REPLACED_SECRET_KEY\"\
+          \n    print(\"Insecure Function\")\n"
       FunctionName: InsecureFunction
       Handler: index.handler
       Role: arn:aws:iam::123456789012:role/lambda-role
-      Code:
-        ZipFile: |
-          def handler(event, context):
-              api_key = "HARDCODED_SECRET_KEY"
-              print("Insecure Function")
       Runtime: python3.9
+    Type: AWS::Lambda::Function
+  PublicS3Bucket:
+    Properties:
+      AccessControl: Private
+    Type: AWS::S3::Bucket

