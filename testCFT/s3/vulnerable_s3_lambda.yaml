@@ -1,21 +1,40 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: S3 bucket access, Lambda with environment variable
-
 Resources:
-  PublicS3Bucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      AccessControl: PublicRead
-
   InsecureLambda:
-    Type: AWS::Lambda::Function
     Properties:
+      Code:
+        ZipFile: "def handler(event, context):\n    api_key = Ref: 'SecretParameter'\n\
+          \    print(\"Insecure Function\")\n"
+      Environment:
+        Variables:
+          SecretParameter:
+            Ref: SecretParameter
       FunctionName: InsecureFunction
       Handler: index.handler
-      Role: arn:aws:iam::123456789012:role/lambda-role
-      Code:
-        ZipFile: |
-          def handler(event, context):
-              api_key = "HARDCODED_SECRET_KEY"
-              print("Insecure Function")
+      Role:
+        Fn::GetAtt: LambdaExecutionRole.Arn
       Runtime: python3.9
+    Type: AWS::Lambda::Function
+  PublicS3Bucket:
+    Properties:
+      AccessControl: AuthenticatedRead
+    Type: AWS::S3::Bucket
+  LambdaExecutionRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+        Version: '2012-10-17'
+      Policies:
+      - PolicyDocument:
+          Statement:
+          - Action: s3:GetObject
+            Effect: Allow
+            Resource:
+              Fn::Sub: arn:aws:s3:::${PublicS3Bucket}/*
+        PolicyName: S3GetObjectPolicy
+    Type: AWS::IAM::Role
