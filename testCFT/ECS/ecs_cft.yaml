@@ -1,85 +1,87 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: secure ECS Service
-
-Resources:
-  secureCluster:
-    Type: AWS::ECS::Cluster
-    Properties:
-      ClusterName: secure-cluster
-
-  InsecureTaskExecutionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: secure-ecs-execution-role
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: ecs-tasks.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: AllowAll
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action: '*'
-                Resource: '*'
-
-  InsecureTaskDefinition:
-    Type: AWS::ECS::TaskDefinition
-    Properties:
-      Family: secure-task-def
-      RequiresCompatibilities:
-        - FARGATE
-      NetworkMode: awsvpc
-      ExecutionRoleArn: !GetAtt secureTaskExecutionRole.Arn
-      ContainerDefinitions:
-        - Name: secure-container
-          Image: nginx:latest
-          Environment:
-            - Name: DATABASE_PASSWORD
-              Value: hardcoded-secret
-          PortMappings:
-            - ContainerPort: 80
-          Essential: true
-
-  secureSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: sg
-      VpcId: vpc-12345678
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          CidrIp: 0.0.0.0/0
-
-  secureService:
-    Type: AWS::ECS::Service
-    Properties:
-      Cluster: !Ref secureCluster
-      DesiredCount: 2
-      LaunchType: FARGATE
-      TaskDefinition: !Ref secureTaskDefinition
-      NetworkConfiguration:
-        AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
-          Subnets:
-            - subnet-12345678
-            - subnet-87654321
-          SecurityGroups:
-            - !Ref secureSecurityGroup
-      DeploymentConfiguration:
-        MaximumPercent: 200
-        MinimumHealthyPercent: 50
-
 Outputs:
   ServiceName:
     Description: ECS Service Name
-    Value: !Ref secureService
+    Value:
+      Ref: secureService
+Resources:
+  secureTaskDefinition:
+    Properties:
+      ContainerDefinitions:
+      - Environment:
+        - Name: DATABASE_PASSWORD
+          Value:
+            Ref: DatabasePassword
+        Essential: true
+        Image: nginx:latest
+        Name: secure-container
+        PortMappings:
+        - ContainerPort: 80
+      ExecutionRoleArn:
+        Fn::GetAtt:
+        - secureTaskExecutionRole
+        - Arn
+      Family: secure-task-def
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+      - FARGATE
+    Type: AWS::ECS::TaskDefinition
+  secureTaskExecutionRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service: ecs-tasks.amazonaws.com
+        Version: '2012-10-17'
+      Policies:
+      - PolicyDocument:
+          Statement:
+          - Action: ecs:RunTask
+            Effect: Allow
+            Resource: '*'
+          Version: '2012-10-17'
+        PolicyName: AllowRunTask
+      RoleName: secure-ecs-execution-role
+    Type: AWS::IAM::Role
+  secureCluster:
+    Properties:
+      ClusterName: secure-cluster
+    Type: AWS::ECS::Cluster
+  secureSecurityGroup:
+    Properties:
+      GroupDescription: sg
+      SecurityGroupIngress:
+      - CidrIp: 10.0.0.0/16
+        FromPort: 80
+        IpProtocol: tcp
+        ToPort: 80
+      - CidrIp: 10.0.0.0/16
+        FromPort: 443
+        IpProtocol: tcp
+        ToPort: 443
+      VpcId:
+        Ref: VPCId
+    Type: AWS::EC2::SecurityGroup
+  secureService:
+    Properties:
+      Cluster:
+        Ref: secureCluster
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 50
+      DesiredCount: 2
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          SecurityGroups:
+          - Ref: secureSecurityGroup
+          Subnets:
+          - Ref: Subnet1
+          - Ref: Subnet2
+      TaskDefinition:
+        Ref: secureTaskDefinition
+    Type: AWS::ECS::Service
