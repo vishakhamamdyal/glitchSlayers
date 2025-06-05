@@ -1,36 +1,35 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: EC2 with wildcard IAM role and encrypted EBS
-
+Description: EC2 with IAM role and encrypted EBS
 Resources:
   AdminRole:
-    Type: AWS::IAM::Role
     Properties:
-      RoleName: WildcardAdminRole
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
         Statement:
-          - Effect: Allow
-            Principal:
-              Service: ec2.amazonaws.com
-            Action: sts:AssumeRole
+        - Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service: ec2.amazonaws.com
+        Version: '2012-10-17'
       Policies:
-        - PolicyName: AccessPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action: "*"
-                Resource: "*"
-
+      - PolicyDocument:
+          Statement:
+          - Action: ec2:DescribeInstances
+            Effect: Allow
+            Resource: '*'
+          Version: '2012-10-17'
+        PolicyName: AccessPolicy
+      RoleName: AdminRole
+    Type: AWS::IAM::Role
   EC2:
-    Type: AWS::EC2::Instance
     Properties:
+      BlockDeviceMappings:
+      - DeviceName: /dev/xvda
+        Ebs:
+          Encrypted: true
+          VolumeSize: 20
+      IamInstanceProfile:
+        Ref: AdminRole
       ImageId: ami-0c55b159cbfafe1f0
       InstanceType: t2.micro
       KeyName: secure-key
-      IamInstanceProfile: !Ref AdminRole
-      BlockDeviceMappings:
-        - DeviceName: /dev/xvda
-          Ebs:
-            VolumeSize: 20
-            Encrypted: false
+    Type: AWS::EC2::Instance
