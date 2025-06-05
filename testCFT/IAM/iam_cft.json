@@ -1,39 +1,38 @@
 {
-    "AWSTemplateFormatVersion": "2010-09-09",
-    "Resources": {
-      "OverPermissiveIAMRole": {
-        "Type": "AWS::IAM::Role",
-        "Properties": {
-          "RoleName": "Role",
-          "AssumeRolePolicyDocument": {
-            "Version": "2012-10-17",
-            "Statement": [
-              {
-                "Effect": "Allow",
-                "Principal": {
-                  "Service": "ec2.amazonaws.com"
-                },
-                "Action": "sts:AssumeRole"
-              }
-            ]
-          },
-          "Policies": [
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Resources": {
+    "OverPermissiveIAMRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "Role",
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
             {
-              "PolicyName": "securePolicy",
-              "PolicyDocument": {
-                "Version": "2012-10-17",
-                "Statement": [
-                  {
-                    "Effect": "Allow",
-                    "Action": "*",
-                    "Resource": "*"
-                  }
-                ]
-              }
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
             }
           ]
-        }
+        },
+        "Policies": [
+          {
+            "PolicyName": "securePolicy",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": "ec2:*",
+                  "Resource": "*"
+                }
+              ]
+            }
+          }
+        ]
       }
     }
   }
-  
+}
